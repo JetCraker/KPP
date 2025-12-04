@@ -1,0 +1,45 @@
+name: cooking_book
+description: CookBook Pro - Flutter application with BLoC state management
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^3.8.1
+  firebase_analytics: ^11.3.6
+  firebase_crashlytics: ^4.1.6
+  firebase_auth: ^5.3.3
+  firebase_storage: ^12.3.6
+  cloud_firestore: ^5.4.5
+  google_sign_in: ^6.2.2
+
+  # State Management - BLoC
+  flutter_bloc: ^8.1.6
+  bloc: ^8.1.4
+  
+  # UI
+  cupertino_icons: ^1.0.8
+  
+  # Image picker
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+# Команди для встановлення залежностей:
+# flutter pub add flutter_bloc
+# flutter pub add bloc
+# flutter pub get

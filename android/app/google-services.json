@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "86476150805",
+    "firebase_url": "https://cooking-book-2b35e-default-rtdb.firebaseio.com",
+    "project_id": "cooking-book-2b35e",
+    "storage_bucket": "cooking-book-2b35e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86476150805:android:2a8f3ee4551f2d13e9561c",
+        "android_client_info": {
+          "package_name": "com.example.cooking_book"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "86476150805-asa0v9dqmo0h82kc02f8ja7e41sv7n6u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.cooking_book",
+            "certificate_hash": "592a7db515e61a5f17ea529d531ad923a9365bed"
+          }
+        },
+        {
+          "client_id": "86476150805-54ik9j10rjakcjjp33ceibpa6b75231k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7XJ4uEBgxPCzW7becSYhUwwKjBp2mxlw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "86476150805-54ik9j10rjakcjjp33ceibpa6b75231k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "86476150805-odpf56i8bd7ud2abech1sl05gpdeqru2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.cookingBook"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
