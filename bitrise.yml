@@ -204,7 +204,7 @@ workflows:
             FIREBASE_TOKEN="$FIREBASE_TOKEN" firebase appdistribution:distribute "$ANDROID_APK_PATH" \
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
-              --groups "testers" \
+              --testers "jetcraker@gmail.com" \
               --release-notes "🐛 DEV Build #$BITRISE_BUILD_NUMBER | Branch: $BITRISE_GIT_BRANCH | Commit: ${GIT_CLONE_COMMIT_HASH:0:7} | ⚠️ Google Sign-In: додайте SHA-1 ($BITRISE_SHA1) до Firebase Console"
             
             if [ $? -eq 0 ]; then
@@ -310,7 +310,7 @@ workflows:
             FIREBASE_TOKEN="$FIREBASE_TOKEN" firebase appdistribution:distribute "$ANDROID_APK_PATH" \
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
-              --groups "testers" \
+              --testers "jetcraker@gmail.com" \
               --release-notes "🔶 STAGING Build #$BITRISE_BUILD_NUMBER | Branch: $BITRISE_GIT_BRANCH | Commit: ${GIT_CLONE_COMMIT_HASH:0:7}"
     
     - deploy-to-bitrise-io@2:
@@ -404,7 +404,7 @@ workflows:
             FIREBASE_TOKEN="$FIREBASE_TOKEN" firebase appdistribution:distribute "$ANDROID_APK_PATH" \
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
-              --groups "testers" \
+              --testers "jetcraker@gmail.com" \
               --release-notes "🚀 PRODUCTION Build #$BITRISE_BUILD_NUMBER | Branch: $BITRISE_GIT_BRANCH | Commit: ${GIT_CLONE_COMMIT_HASH:0:7}"
     
     - deploy-to-bitrise-io@2:
