@@ -1,0 +1,6 @@
+.vs/
+*.ipch
+*.obj
+*.pdb
+*.user
+*.cache
