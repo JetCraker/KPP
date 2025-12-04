@@ -1,10 +1,9 @@
----
+﻿---
 format_version: '23'
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 project_type: flutter
 
-# Trigger налаштування
 triggers:
   push:
   - branch: main
@@ -17,30 +16,19 @@ triggers:
   - source_branch: "*"
     workflow: android_dev
 
-# Workflows
 workflows:
-  
-  # 🔥 Development Build
   android_dev:
     description: Build Android APK (DEV flavor) для Firebase App Distribution
     steps:
-    
-    # 1. Клонувати репозиторій через HTTPS
     - git-clone@8:
         inputs:
         - clone_depth: '0'
         - fetch_tags: 'yes'
-    
-    # 2. Встановити Flutter
     - flutter-installer@0:
         inputs:
         - version: 3.35.3
         - is_update: 'false'
-    
-    # 3. Cache Dart packages
     - restore-dart-cache@2: {}
-    
-    # 4. Flutter pub get
     - script@1:
         title: Flutter packages get
         inputs:
@@ -48,8 +36,6 @@ workflows:
             #!/usr/bin/env bash
             set -e
             flutter pub get
-    
-    # 5. Build Runner для env файлів
     - script@1:
         title: Generate env files
         inputs:
@@ -57,78 +43,46 @@ workflows:
             #!/usr/bin/env bash
             set -e
             
-            echo "📦 Creating .env files..."
+            echo " Creating .env files..."
             
-            # Create .env.dev
             cat > .env.dev << EOF
             apiUrl=$DEV_API_URL
             firebaseApiKey=$DEV_FIREBASE_API_KEY
             EOF
             
-            # Create .env.staging  
             cat > .env.staging << EOF
             apiUrl=$STAGING_API_URL
             firebaseApiKey=$STAGING_FIREBASE_API_KEY
             EOF
             
-            # Create .env.prod
             cat > .env.prod << EOF
             apiUrl=$PROD_API_URL
             firebaseApiKey=$PROD_FIREBASE_API_KEY
             EOF
             
-            echo "✅ .env files created"
+            echo " .env files created"
             
-            # Run build_runner
-            echo "🔄 Running build_runner..."
+            echo " Running build_runner..."
             dart run build_runner build --delete-conflicting-outputs
             
-            echo "✅ Code generation completed"
-    
-    # 6. ⚠️ Отримати SHA-1 для Google Sign-In налаштування
+            echo " Code generation completed"
     - script@1:
-        title: Get Debug SHA-1 (для Firebase Console)
+        title: Get Debug SHA-1
         inputs:
         - content: |-
             #!/usr/bin/env bash
             set -e
             
-            echo "🔑 Getting SHA-1 fingerprint for Google Sign-In setup..."
-            echo ""
+            echo " Getting SHA-1 fingerprint..."
             
-            # Bitrise використовує стандартний debug keystore
             KEYSTORE_PATH="$HOME/.android/debug.keystore"
             
             if [ -f "$KEYSTORE_PATH" ]; then
                 SHA1=$(keytool -list -v -keystore "$KEYSTORE_PATH" -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep SHA1 | awk '{print $2}')
-                SHA256=$(keytool -list -v -keystore "$KEYSTORE_PATH" -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep SHA256 | awk '{print $2}')
-                
-                echo "════════════════════════════════════════════════════"
-                echo "⚠️  IMPORTANT: Add this SHA-1 to Firebase Console"
-                echo "════════════════════════════════════════════════════"
-                echo ""
-                echo "SHA-1:   $SHA1"
-                echo "SHA-256: $SHA256"
-                echo ""
-                echo "📍 Where to add:"
-                echo "   Firebase Console → Project Settings → Your App"
-                echo "   → Add Fingerprint → Paste SHA-1"
-                echo ""
-                echo "════════════════════════════════════════════════════"
-                echo ""
-                
-                # Export для використання в наступних кроках
+                echo "SHA-1: $SHA1"
                 envman add --key BITRISE_SHA1 --value "$SHA1"
-            else
-                echo "⚠️  Debug keystore not found at $KEYSTORE_PATH"
-                echo "🔄 Creating default debug keystore..."
-                keytool -genkey -v -keystore "$KEYSTORE_PATH" -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
             fi
-    
-    # 7. Save Dart cache
     - save-dart-cache@1: {}
-    
-    # 8. Build Android APK (DEV flavor - debug)
     - script@1:
         title: Build Android APK (DEV Debug)
         inputs:
@@ -136,27 +90,17 @@ workflows:
             #!/usr/bin/env bash
             set -e
             
-            echo "🔨 Building Flutter Android APK (DEV flavor, Debug mode)..."
             flutter build apk --debug --flavor dev -t lib/main_dev.dart
             
             APK_PATH="build/app/outputs/flutter-apk/app-dev-debug.apk"
             
             if [ -f "$APK_PATH" ]; then
-                echo "✅ APK built successfully: $APK_PATH"
-                ls -lh "$APK_PATH"
-                
-                # Export для Firebase
                 envman add --key ANDROID_APK_PATH --value "$BITRISE_SOURCE_DIR/$APK_PATH"
-                
-                # Copy to deploy dir
                 cp "$APK_PATH" "$BITRISE_DEPLOY_DIR/CookingBook-DEV.apk"
-                echo "✅ APK copied to artifacts"
+                echo " APK built"
             else
-                echo "❌ APK not found!"
                 exit 1
             fi
-    
-    # 9. Firebase App Distribution (DEV)
     - script@1:
         title: Firebase App Distribution (DEV)
         is_always_run: false
@@ -165,86 +109,37 @@ workflows:
             #!/usr/bin/env bash
             set -e
             
-            echo "🔥 Uploading DEV build to Firebase App Distribution..."
-            
-            # Перевірка наявності всіх необхідних змінних
-            if [ -z "$FIREBASE_TOKEN" ]; then
-                echo "❌ FIREBASE_TOKEN is not set!"
-                echo "Please add it to Bitrise Secrets:"
-                echo "  1. Go to Workflow → Secrets"
-                echo "  2. Add FIREBASE_TOKEN"
-                echo "  3. Get token with: firebase login:ci"
+            if [ -z "$FIREBASE_TOKEN" ] || [ -z "$FIREBASE_APP_ID_ANDROID" ]; then
+                echo " Missing Firebase config"
                 exit 1
             fi
             
-            if [ -z "$FIREBASE_APP_ID_ANDROID" ]; then
-                echo "❌ FIREBASE_APP_ID_ANDROID is not set!"
-                echo "Please add it to Bitrise Secrets"
-                exit 1
-            fi
-            
-            echo "APK: $ANDROID_APK_PATH"
-            echo "App ID: $FIREBASE_APP_ID_ANDROID"
-            echo "Token: ${FIREBASE_TOKEN:0:20}..."
-            
-            if [ ! -f "$ANDROID_APK_PATH" ]; then
-                echo "❌ APK file not found!"
-                exit 1
-            fi
-            
-            # Install Firebase CLI
-            echo "📦 Installing Firebase CLI..."
             npm install -g firebase-tools
             
-            # Verify Firebase CLI
-            firebase --version
-            
-            # Upload to Firebase with explicit token
-            echo "🚀 Starting upload..."
             FIREBASE_TOKEN="$FIREBASE_TOKEN" firebase appdistribution:distribute "$ANDROID_APK_PATH" \
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
               --testers "jetcraker@gmail.com" \
-              --release-notes "🐛 DEV Build #$BITRISE_BUILD_NUMBER | Branch: $BITRISE_GIT_BRANCH | Commit: ${GIT_CLONE_COMMIT_HASH:0:7} | ⚠️ Google Sign-In: додайте SHA-1 ($BITRISE_SHA1) до Firebase Console"
-            
-            if [ $? -eq 0 ]; then
-                echo "✅ Successfully uploaded to Firebase App Distribution!"
-            else
-                echo "❌ Upload failed. Check:"
-                echo "  1. FIREBASE_TOKEN is valid"
-                echo "  2. FIREBASE_APP_ID_ANDROID is correct"
-                echo "  3. Firebase App Distribution is enabled"
-                exit 1
-            fi
-    
-    # 10. Deploy артефактів
+              --release-notes "DEV Build #$BITRISE_BUILD_NUMBER"
     - deploy-to-bitrise-io@2:
         inputs:
         - notify_user_groups: none
-        - is_compress: 'false'
 
-  # 🔶 Staging Build
   android_staging:
-    description: Build Android APK (STAGING flavor) для Firebase App Distribution
+    description: Build Android APK (STAGING flavor)
     steps:
-    
     - git-clone@8: {}
-    
     - flutter-installer@0:
         inputs:
         - version: 3.35.3
-        - is_update: 'false'
-    
     - restore-dart-cache@2: {}
-    
     - script@1:
-        title: Flutter packages get
+        title: Flutter pub get
         inputs:
         - content: |-
             #!/usr/bin/env bash
             set -e
             flutter pub get
-    
     - script@1:
         title: Generate env files
         inputs:
@@ -268,17 +163,14 @@ workflows:
             EOF
             
             dart run build_runner build --delete-conflicting-outputs
-    
     - save-dart-cache@1: {}
-    
     - script@1:
-        title: Build Android APK (STAGING Release)
+        title: Build STAGING APK
         inputs:
         - content: |-
             #!/usr/bin/env bash
             set -e
             
-            echo "🔨 Building STAGING APK..."
             flutter build apk --release --flavor staging -t lib/main_staging.dart
             
             APK_PATH="build/app/outputs/flutter-apk/app-staging-release.apk"
@@ -286,24 +178,15 @@ workflows:
             if [ -f "$APK_PATH" ]; then
                 envman add --key ANDROID_APK_PATH --value "$BITRISE_SOURCE_DIR/$APK_PATH"
                 cp "$APK_PATH" "$BITRISE_DEPLOY_DIR/CookingBook-STAGING.apk"
-                echo "✅ STAGING APK ready"
             else
-                echo "❌ APK not found!"
                 exit 1
             fi
-    
     - script@1:
-        title: Firebase App Distribution (STAGING)
-        is_always_run: false
+        title: Firebase Distribution
         inputs:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
-            if [ -z "$FIREBASE_TOKEN" ] || [ -z "$FIREBASE_APP_ID_ANDROID" ]; then
-                echo "❌ Missing FIREBASE_TOKEN or FIREBASE_APP_ID_ANDROID"
-                exit 1
-            fi
             
             npm install -g firebase-tools
             
@@ -311,34 +194,26 @@ workflows:
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
               --testers "jetcraker@gmail.com" \
-              --release-notes "🔶 STAGING Build #$BITRISE_BUILD_NUMBER | Branch: $BITRISE_GIT_BRANCH | Commit: ${GIT_CLONE_COMMIT_HASH:0:7}"
-    
+              --release-notes "STAGING Build #$BITRISE_BUILD_NUMBER"
     - deploy-to-bitrise-io@2:
         inputs:
         - notify_user_groups: none
 
-  # 🚀 Production Build  
   android_prod:
-    description: Build Android APK (PROD flavor) для Firebase App Distribution
+    description: Build Android APK (PROD flavor)
     steps:
-    
     - git-clone@8: {}
-    
     - flutter-installer@0:
         inputs:
         - version: 3.35.3
-        - is_update: 'false'
-    
     - restore-dart-cache@2: {}
-    
     - script@1:
-        title: Flutter packages get
+        title: Flutter pub get
         inputs:
         - content: |-
             #!/usr/bin/env bash
             set -e
             flutter pub get
-    
     - script@1:
         title: Generate env files
         inputs:
@@ -362,17 +237,14 @@ workflows:
             EOF
             
             dart run build_runner build --delete-conflicting-outputs
-    
     - save-dart-cache@1: {}
-    
     - script@1:
-        title: Build Android APK (PROD Release)
+        title: Build PROD APK
         inputs:
         - content: |-
             #!/usr/bin/env bash
             set -e
             
-            echo "🔨 Building PRODUCTION APK..."
             flutter build apk --release --flavor prod -t lib/main_prod.dart
             
             APK_PATH="build/app/outputs/flutter-apk/app-prod-release.apk"
@@ -380,24 +252,15 @@ workflows:
             if [ -f "$APK_PATH" ]; then
                 envman add --key ANDROID_APK_PATH --value "$BITRISE_SOURCE_DIR/$APK_PATH"
                 cp "$APK_PATH" "$BITRISE_DEPLOY_DIR/CookingBook-PROD.apk"
-                echo "✅ PRODUCTION APK ready"
             else
-                echo "❌ APK not found!"
                 exit 1
             fi
-    
     - script@1:
-        title: Firebase App Distribution (PROD)
-        is_always_run: false
+        title: Firebase Distribution
         inputs:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
-            if [ -z "$FIREBASE_TOKEN" ] || [ -z "$FIREBASE_APP_ID_ANDROID" ]; then
-                echo "❌ Missing FIREBASE_TOKEN or FIREBASE_APP_ID_ANDROID"
-                exit 1
-            fi
             
             npm install -g firebase-tools
             
@@ -405,8 +268,7 @@ workflows:
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
               --testers "jetcraker@gmail.com" \
-              --release-notes "🚀 PRODUCTION Build #$BITRISE_BUILD_NUMBER | Branch: $BITRISE_GIT_BRANCH | Commit: ${GIT_CLONE_COMMIT_HASH:0:7}"
-    
+              --release-notes "PROD Build #$BITRISE_BUILD_NUMBER"
     - deploy-to-bitrise-io@2:
         inputs:
         - notify_user_groups: none
@@ -419,15 +281,6 @@ app:
   - FLUTTER_VERSION: stable
     opts:
       is_expand: false
-  # Environment variables (add these to Bitrise Secrets)
-  # DEV_API_URL: https://dev.api.example.com
-  # DEV_FIREBASE_API_KEY: dev_key
-  # STAGING_API_URL: https://staging.api.example.com
-  # STAGING_FIREBASE_API_KEY: staging_key
-  # PROD_API_URL: https://prod.api.example.com
-  # PROD_FIREBASE_API_KEY: prod_key
-  # FIREBASE_TOKEN: your_firebase_token
-  # FIREBASE_APP_ID_ANDROID: 1:86476150805:android:2a8f3ee4551f2d13e9561c
 
 meta:
   bitrise.io:
