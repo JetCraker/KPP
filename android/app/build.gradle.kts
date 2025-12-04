@@ -23,20 +23,36 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.cooking_book"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    // 🔥🔥🔥 ДОДАНО FLAVORS 🔥🔥🔥
+    flavorDimensions += "environment"
+
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            versionNameSuffix = "-dev"
+            resValue("string", "app_name", "CookBook [DEV]")
+        }
+        create("staging") {
+            dimension = "environment"
+            versionNameSuffix = "-stg"
+            resValue("string", "app_name", "CookBook [STG]")
+        }
+        create("prod") {
+            dimension = "environment"
+            resValue("string", "app_name", "CookBook Pro")
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // TODO: Change to your signing config for release
             signingConfig = signingConfigs.getByName("debug")
         }
     }
