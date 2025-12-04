@@ -7,11 +7,15 @@ project_type: flutter
 # Trigger налаштування
 triggers:
   push:
-    - branch: main
-      workflow: android_dev
+  - branch: main
+    workflow: android_dev
+  - branch: staging
+    workflow: android_staging
+  - branch: production
+    workflow: android_prod
   pull_request:
-    - source_branch: "*"
-      workflow: android_dev
+  - source_branch: "*"
+    workflow: android_dev
 
 # Workflows
 workflows:
@@ -424,9 +428,6 @@ app:
   # PROD_FIREBASE_API_KEY: prod_key
   # FIREBASE_TOKEN: your_firebase_token
   # FIREBASE_APP_ID_ANDROID: 1:86476150805:android:2a8f3ee4551f2d13e9561c
-#
-
-
 
 meta:
   bitrise.io:
