@@ -1,20 +1,23 @@
 ﻿---
-format_version: "13"
+format_version: '13'
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
 
 project_type: flutter
 
+# Trigger налаштування
 triggers:
   push:
-  - branch: main
-    workflow: android_dev
-  - branch: staging
-    workflow: android_staging
-  - branch: production
-    workflow: android_prod
+    - branch: main
+      workflow: android_dev
+    - branch: staging
+      workflow: android_staging
+    - branch: production
+      workflow: android_prod
   pull_request:
-  - source_branch: "*"
-    workflow: android_dev
+    - source_branch: "*"
+      workflow: android_dev
+
+# Workflows
 
 workflows:
   android_dev:
