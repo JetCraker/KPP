@@ -1,24 +1,18 @@
 ---
 format_version: '13'
 default_step_lib_source: https://github.com/bitrise-io/bitrise-steplib.git
-
 project_type: flutter
-
-# Trigger налаштування
 triggers:
   push:
-    - branch: main
-      workflow: android_dev
-    - branch: staging
-      workflow: android_staging
-    - branch: production
-      workflow: android_prod
+  - branch: main
+    workflow: android_dev
+  - branch: staging
+    workflow: android_staging
+  - branch: production
+    workflow: android_prod
   pull_request:
-    - source_branch: "*"
-      workflow: android_dev
-
-# Workflows
-
+  - source_branch: "*"
+    workflow: android_dev
 workflows:
   android_dev:
     description: Build Android APK (DEV flavor) для Firebase App Distribution
@@ -45,29 +39,29 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             echo " Creating .env files..."
-            
+
             cat > .env.dev << EOF
             apiUrl=$DEV_API_URL
             firebaseApiKey=$DEV_FIREBASE_API_KEY
             EOF
-            
+
             cat > .env.staging << EOF
             apiUrl=$STAGING_API_URL
             firebaseApiKey=$STAGING_FIREBASE_API_KEY
             EOF
-            
+
             cat > .env.prod << EOF
             apiUrl=$PROD_API_URL
             firebaseApiKey=$PROD_FIREBASE_API_KEY
             EOF
-            
+
             echo " .env files created"
-            
+
             echo " Running build_runner..."
             dart run build_runner build --delete-conflicting-outputs
-            
+
             echo " Code generation completed"
     - script@1:
         title: Get Debug SHA-1
@@ -75,11 +69,11 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             echo " Getting SHA-1 fingerprint..."
-            
+
             KEYSTORE_PATH="$HOME/.android/debug.keystore"
-            
+
             if [ -f "$KEYSTORE_PATH" ]; then
                 SHA1=$(keytool -list -v -keystore "$KEYSTORE_PATH" -alias androiddebugkey -storepass android -keypass android 2>/dev/null | grep SHA1 | awk '{print $2}')
                 echo "SHA-1: $SHA1"
@@ -92,11 +86,11 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             flutter build apk --debug --flavor dev -t lib/main_dev.dart
-            
+
             APK_PATH="build/app/outputs/flutter-apk/app-dev-debug.apk"
-            
+
             if [ -f "$APK_PATH" ]; then
                 envman add --key ANDROID_APK_PATH --value "$BITRISE_SOURCE_DIR/$APK_PATH"
                 cp "$APK_PATH" "$BITRISE_DEPLOY_DIR/CookingBook-DEV.apk"
@@ -111,14 +105,14 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             if [ -z "$FIREBASE_TOKEN" ] || [ -z "$FIREBASE_APP_ID_ANDROID" ]; then
                 echo " Missing Firebase config"
                 exit 1
             fi
-            
+
             npm install -g firebase-tools
-            
+
             FIREBASE_TOKEN="$FIREBASE_TOKEN" firebase appdistribution:distribute "$ANDROID_APK_PATH" \
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
@@ -127,7 +121,6 @@ workflows:
     - deploy-to-bitrise-io@2:
         inputs:
         - notify_user_groups: none
-
   android_staging:
     description: Build Android APK (STAGING flavor)
     steps:
@@ -149,22 +142,22 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             cat > .env.dev << EOF
             apiUrl=$DEV_API_URL
             firebaseApiKey=$DEV_FIREBASE_API_KEY
             EOF
-            
+
             cat > .env.staging << EOF
             apiUrl=$STAGING_API_URL
             firebaseApiKey=$STAGING_FIREBASE_API_KEY
             EOF
-            
+
             cat > .env.prod << EOF
             apiUrl=$PROD_API_URL
             firebaseApiKey=$PROD_FIREBASE_API_KEY
             EOF
-            
+
             dart run build_runner build --delete-conflicting-outputs
     - save-dart-cache@1: {}
     - script@1:
@@ -173,11 +166,11 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             flutter build apk --release --flavor staging -t lib/main_staging.dart
-            
+
             APK_PATH="build/app/outputs/flutter-apk/app-staging-release.apk"
-            
+
             if [ -f "$APK_PATH" ]; then
                 envman add --key ANDROID_APK_PATH --value "$BITRISE_SOURCE_DIR/$APK_PATH"
                 cp "$APK_PATH" "$BITRISE_DEPLOY_DIR/CookingBook-STAGING.apk"
@@ -190,9 +183,9 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             npm install -g firebase-tools
-            
+
             FIREBASE_TOKEN="$FIREBASE_TOKEN" firebase appdistribution:distribute "$ANDROID_APK_PATH" \
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
@@ -201,7 +194,6 @@ workflows:
     - deploy-to-bitrise-io@2:
         inputs:
         - notify_user_groups: none
-
   android_prod:
     description: Build Android APK (PROD flavor)
     steps:
@@ -223,22 +215,22 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             cat > .env.dev << EOF
             apiUrl=$DEV_API_URL
             firebaseApiKey=$DEV_FIREBASE_API_KEY
             EOF
-            
+
             cat > .env.staging << EOF
             apiUrl=$STAGING_API_URL
             firebaseApiKey=$STAGING_FIREBASE_API_KEY
             EOF
-            
+
             cat > .env.prod << EOF
             apiUrl=$PROD_API_URL
             firebaseApiKey=$PROD_FIREBASE_API_KEY
             EOF
-            
+
             dart run build_runner build --delete-conflicting-outputs
     - save-dart-cache@1: {}
     - script@1:
@@ -247,11 +239,11 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             flutter build apk --release --flavor prod -t lib/main_prod.dart
-            
+
             APK_PATH="build/app/outputs/flutter-apk/app-prod-release.apk"
-            
+
             if [ -f "$APK_PATH" ]; then
                 envman add --key ANDROID_APK_PATH --value "$BITRISE_SOURCE_DIR/$APK_PATH"
                 cp "$APK_PATH" "$BITRISE_DEPLOY_DIR/CookingBook-PROD.apk"
@@ -264,9 +256,9 @@ workflows:
         - content: |-
             #!/usr/bin/env bash
             set -e
-            
+
             npm install -g firebase-tools
-            
+
             FIREBASE_TOKEN="$FIREBASE_TOKEN" firebase appdistribution:distribute "$ANDROID_APK_PATH" \
               --app "$FIREBASE_APP_ID_ANDROID" \
               --token "$FIREBASE_TOKEN" \
@@ -275,7 +267,6 @@ workflows:
     - deploy-to-bitrise-io@2:
         inputs:
         - notify_user_groups: none
-
 app:
   envs:
   - BITRISE_FLUTTER_PROJECT_LOCATION: "."
@@ -284,7 +275,6 @@ app:
   - FLUTTER_VERSION: stable
     opts:
       is_expand: false
-
 meta:
   bitrise.io:
     stack: linux-docker-android-22.04
