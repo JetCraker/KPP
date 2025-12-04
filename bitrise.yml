@@ -25,8 +25,11 @@ workflows:
     description: Build Android APK (DEV flavor) для Firebase App Distribution
     steps:
     
-    # 1. Клонувати репозиторій (без SSH, використовуємо HTTPS)
-    - git-clone@8: {}
+    # 1. Клонувати репозиторій через HTTPS
+    - git-clone@8:
+        inputs:
+        - clone_depth: '0'
+        - fetch_tags: 'yes'
     
     # 2. Встановити Flutter
     - flutter-installer@0:
