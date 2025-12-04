@@ -28,16 +28,36 @@ FIREBASE_APP_ID_ANDROID=1:86476150805:android:2a8f3ee4551f2d13e9561c
 ```
 
 **Як отримати FIREBASE_TOKEN:**
+
+**Варіант 1: Через firebase-tools (локально):**
 ```bash
-# Встановіть Firebase CLI
+# Встановіть Firebase CLI (якщо ще не встановлено)
 npm install -g firebase-tools
 
 # Залогіньтесь
 firebase login
 
-# Отримайте token
+# Отримайте token для CI/CD
 firebase login:ci
 ```
+
+Скопіюйте токен, який з'явиться після успішного логіну.
+
+**Варіант 2: Через Google Cloud Console:**
+1. Відкрийте [Google Cloud Console](https://console.cloud.google.com)
+2. Виберіть проєкт `cooking-book-2b35e`
+3. IAM & Admin → Service Accounts
+4. Create Service Account
+5. Назва: `bitrise-ci`, Role: `Firebase App Distribution Admin`
+6. Create Key → JSON
+7. Завантажте JSON файл
+8. Використайте вміст JSON як `FIREBASE_SERVICE_ACCOUNT_KEY` замість `FIREBASE_TOKEN`
+
+**Варіант 3: Refresh Token (найпростіший):**
+```bash
+firebase login:ci
+```
+Скопіюйте token і додайте в Bitrise Secrets як `FIREBASE_TOKEN`
 
 #### Development Environment
 ```
